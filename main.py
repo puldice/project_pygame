@@ -1,18 +1,15 @@
 import pygame
 import random
 
-# Инициализация Pygame
 pygame.init()
 
-# Параметры окна
 WIDTH, HEIGHT = 570, 650
 CELL_SIZE = 100
 PADDING = 10
 BORDER_RADIUS = 15
 FPS = 80
-TOP_PADDING = 80  # Отступ сверху для счета
+TOP_PADDING = 80
 
-# Цвета
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GRAY = (200, 200, 200)
@@ -39,54 +36,45 @@ COLORS = {
     1048576: (33, 139, 130)
 }
 
-# Шрифт
 font = pygame.font.SysFont("RotondacBold", 60)
 score_font = pygame.font.SysFont("RotondacBold", 40)
 menu_font = pygame.font.SysFont("RotondacBold", 50)
 
-# Создание окна
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Объединяй клетки!")
 clock = pygame.time.Clock()
 
-# Игровое поле
 grid = [[0 for _ in range(5)] for _ in range(5)]
-
-# Анимация падения клеток
 falling_cells = []
-
-# Счет
 score = 0
 
-# Состояния игры
 START_MENU = 0
 GAME_ACTIVE = 1
 game_state = START_MENU
 
-# Уровни сложности
 EASY = "Easy"
 MEDIUM = "Medium"
 HARD = "Hard"
 current_difficulty = MEDIUM
 
 def render_value(value):
-    """Форматирует изображение значения."""
+    # заменяет большое число на число+К
     if value >= 16384:
         return f"{value // 1024}K"
     return str(value)
 
 def draw_grid():
-    """Отрисовка игрового поля с обновленными значениями."""
+    # отрисовка игрового поля
     for i in range(5):
         for j in range(5):
-            # Проверяем, не находится ли текущая клетка под падающей
+            # проверяет, не находится ли текущая клетка под падающей
             is_under_falling = False
             for cell in falling_cells:
                 if cell["end_i"] == i and cell["end_j"] == j:
                     is_under_falling = True
                     break
 
-            # Если клетка не под падающей, отрисовываем её
+            # если клетка не под падающей, отрисовываем её
             if not is_under_falling:
                 value = grid[i][j]
                 color = COLORS.get(value, GRAY)
@@ -103,7 +91,7 @@ def draw_grid():
                     screen.blit(text, text_rect)
 
 def add_random_tile(column, count):
-    """Добавляет случайные плитки в указанный столбец сверху с анимацией падения."""
+    # добавляет случайные плитки в столбец сверху
     global falling_cells
     for _ in range(count):
         for i in range(5):
@@ -119,7 +107,7 @@ def add_random_tile(column, count):
                 break
 
 def merge_tiles(cells):
-    """Объединяет несколько клеток с одинаковыми значениями."""
+    # объединяет несколько клеток с одинаковыми значениями
     global score
     if len(cells) < 2:
         return False
@@ -143,13 +131,12 @@ def merge_tiles(cells):
     for i, j in cells[:-1]:
         grid[i][j] = 0
 
-    # Обновляем счет
     score += value * multiplier
 
     return True
 
 def is_valid_move(cells):
-    """Проверяет, является ли ход допустимым (клетки могут быть соединены по диагонали)."""
+    # проверяет, является ли ход допустимым
     for k in range(1, len(cells)):
         prev_i, prev_j = cells[k - 1]
         curr_i, curr_j = cells[k]
@@ -158,7 +145,7 @@ def is_valid_move(cells):
     return True
 
 def shift_cells_down():
-    """Сдвигает все клетки вниз, чтобы заполнить пустоты, и запускает анимацию."""
+    # сдвигает все клетки вниз
     global falling_cells
     falling_cells = []
     for j in range(5):
@@ -182,17 +169,17 @@ def shift_cells_down():
             i -= 1
 
 def draw_line(cells):
-    """Отрисовывает линию, соединяющую выбранные клетки."""
+    # отрисовывает линию
     if len(cells) > 1:
         points = []
         for i, j in cells:
             x = j * (CELL_SIZE + PADDING) + PADDING + CELL_SIZE // 2
             y = i * (CELL_SIZE + PADDING) + PADDING + CELL_SIZE // 2 + TOP_PADDING
             points.append((x, y))
-        pygame.draw.lines(screen, BLACK, False, points, 3)
+        pygame.draw.lines(screen, BLACK, False, points, 15)  # Увеличиваем толщину линии до 5
 
 def handle_drag(cells):
-    """Обрабатывает перетаскивание мыши и объединение клеток."""
+    #Обрабатывает перетаскивание мыши и объединение клеток
     if len(cells) >= 2 and is_valid_move(cells):
         if merge_tiles(cells):
             shift_cells_down()
@@ -203,7 +190,7 @@ def handle_drag(cells):
                     add_random_tile(j, 1)  # Добавляем по одной новой клетке в каждый столбец с пустыми местами
 
 def update_falling_cells():
-    """Обновляет анимацию падения клеток."""
+    # Обновляет анимацию падения клеток
     global falling_cells
     for cell in falling_cells:
         cell["progress"] += 0.05
@@ -213,7 +200,7 @@ def update_falling_cells():
     falling_cells = [cell for cell in falling_cells if cell["progress"] < 1.0]
 
 def draw_falling_cells():
-    """Отрисовывает падающие клетки."""
+    # Отрисовывает падающие клетки
     for cell in falling_cells:
         start_i, start_j = cell["start_i"], cell["start_j"]
         end_i, end_j = cell["end_i"], cell["end_j"]
@@ -235,14 +222,14 @@ def draw_falling_cells():
             screen.blit(text, text_rect)
 
 def draw_score():
-    """Отрисовывает счет над игровым полем."""
+    # Отрисовывает счет
     score_text = score_font.render(f"Счет: {score}", True, BLACK)
     # Центрируем счет по горизонтали и располагаем выше игрового поля
     score_text_rect = score_text.get_rect(center=(WIDTH // 2, 30))
     screen.blit(score_text, score_text_rect)
 
 def draw_start_menu():
-    """Отрисовывает стартовое меню с выбором уровня сложности."""
+    # Отрисовывает стартовое меню с выбором уровня сложности
     screen.fill(WHITE)
     title_text = menu_font.render("Выберите уровень сложности", True, BLACK)
     title_rect = title_text.get_rect(center=(WIDTH // 2, 100))
@@ -262,7 +249,6 @@ def draw_start_menu():
     pygame.draw.rect(screen, medium_color, medium_rect, border_radius=20)
     pygame.draw.rect(screen, hard_color, hard_rect, border_radius=20)
 
-    # Отрисовываем текст поверх прямоугольников
     easy_text = menu_font.render("Easy", True, BLACK)
     easy_text_rect = easy_text.get_rect(center=easy_rect.center)
     screen.blit(easy_text, easy_text_rect)
@@ -276,7 +262,7 @@ def draw_start_menu():
     screen.blit(hard_text, hard_text_rect)
 
 def handle_menu_click(pos):
-    """Обрабатывает клик в стартовом меню для выбора уровня сложности."""
+    # Обрабатывает клик в стартовом меню
     global game_state, current_difficulty
     # Проверяем, куда кликнул пользователь
     if 220 <= pos[1] <= 300:  # Easy
@@ -290,7 +276,7 @@ def handle_menu_click(pos):
         game_state = GAME_ACTIVE
 
 def initialize_grid():
-    """Инициализирует игровое поле в зависимости от выбранного уровня сложности."""
+    # Инициализирует игровое поле в зависимости от выбранного уровня сложности
     global grid
     grid = [[0 for _ in range(5)] for _ in range(5)]
     for i in range(5):
@@ -300,25 +286,53 @@ def initialize_grid():
             elif current_difficulty == MEDIUM:
                 grid[i][j] = random.choice([2, 4, 8, 16, 32, 64])
             elif current_difficulty == HARD:
-                grid[i][j] = random.choice([8, 16, 32, 64, 128, 256])
+                grid[i][j] = random.choice([2, 4, 8, 16, 32, 64, 128, 256])
 
 def check_and_fill_grid():
-    """Проверяет, есть ли на поле пустые клетки, и заполняет их случайными значениями."""
+    # Проверяет, есть ли на поле пустые клетки, и заполняет их случайными значениями
     empty_cells = []
     for i in range(5):
         for j in range(5):
             if grid[i][j] == 0:
                 empty_cells.append((i, j))
-
     if empty_cells:
         for i, j in empty_cells:
             grid[i][j] = random.choice([2, 4, 8, 16, 32, 64])
 
+def is_game_over():
+    # Проверяет, остались ли на поле клетки, которые можно объединить
+    for i in range(5):
+        for j in range(5):
+            for di, dj in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                ni, nj = i + di, j + dj
+                if 0 <= ni < 5 and 0 <= nj < 5:
+                    if grid[ni][nj] == grid[i][j]:
+                        return False
+    return True
 
-# Основной цикл игры
+def draw_game_over_screen():
+    # Отрисовывает экран проигрыша
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    overlay.fill((255, 255, 255, 128))
+    screen.blit(overlay, (0, 0))
+
+    # Текст "Game Over"
+    game_over_text = menu_font.render("Game Over", True, BLACK)
+    game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 50))
+    screen.blit(game_over_text, game_over_rect)
+
+    # Счет игрока
+    score_text = score_font.render(f"Счет: {score}", True, BLACK)
+    score_rect = score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20))
+    screen.blit(score_text, score_rect)
+
+
+
 running = True
 dragging = False
+game_over = False
 selected_cells = []
+game_over_delay = 1500
 
 while running:
     if game_state == START_MENU:
@@ -331,36 +345,45 @@ while running:
                     handle_menu_click(event.pos)
                     initialize_grid()
     elif game_state == GAME_ACTIVE:
-        screen.fill(WHITE)
-        draw_grid()  # Отрисовываем сетку
-        draw_falling_cells()  # Отрисовываем падающие клетки
-        if dragging:
-            draw_line(selected_cells)  # Отрисовываем линию, если происходит перетаскивание
-        update_falling_cells()  # Обновляем анимацию падения
-        draw_score()  # Отрисовываем счет
+        if not game_over:
+            screen.fill(WHITE)
+            if dragging:
+                draw_line(selected_cells)  # Отрисовываем линию перед отрисовкой клеток
+            draw_grid()  # Отрисовываем сетку
+            draw_falling_cells()  # Отрисовываем падающие клетки
+            update_falling_cells()  # Обновляем анимацию падения
+            draw_score()  # Отрисовываем счет
+
+            # Проверяем, проиграл ли игрок
+            if is_game_over():
+                pygame.time.delay(game_over_delay)  # Задержка перед показом экрана проигрыша
+                game_over = True
+
+        if game_over:
+            draw_game_over_screen()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
+                if event.button == 1 and not game_over:
                     dragging = True
                     i = (event.pos[1] - TOP_PADDING) // (CELL_SIZE + PADDING)
                     j = event.pos[0] // (CELL_SIZE + PADDING)
                     if 0 <= i < 5 and 0 <= j < 5:
                         selected_cells.append((i, j))
-                elif event.button == 3:
+                elif event.button == 3 and not game_over:
                     if len(selected_cells) > 0:
                         selected_cells.pop()
             elif event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1 and dragging:
+                if event.button == 1 and dragging and not game_over:
                     handle_drag(selected_cells)
                     dragging = False
                     selected_cells = []
                     check_and_fill_grid()  # Проверяем и заполняем пустые клетки после хода
 
             elif event.type == pygame.MOUSEMOTION:
-                if dragging:
+                if dragging and not game_over:
                     mouse_x, mouse_y = event.pos
                     for i in range(5):
                         for j in range(5):
